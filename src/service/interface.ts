@@ -118,6 +118,12 @@ export interface IStopsService {
   ): Promise<Result<NearestPlace[] | null, APIError>>;
 }
 
+export interface Otp2TripPattern extends TripPattern {
+  systemNotices: {
+    tag: string;
+    text: string;
+  }[];
+}
 export interface IJourneyService {
   getTrips(query: TripQuery): Promise<Result<TripPattern[], APIError>>;
 
@@ -126,5 +132,5 @@ export interface IJourneyService {
   ): Promise<Result<TripPattern | null, APIError>>;
   getTripPatterns(
     query: TripPatternsQuery
-  ): Promise<Result<TripPattern[], APIError>>;
+  ): Promise<Result<Otp2TripPattern[], APIError>>;
 }

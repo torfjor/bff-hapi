@@ -12,6 +12,9 @@ import {
 } from './schema';
 import { parseTripPatternId } from '../../utils/journey-utils';
 import * as Boom from '@hapi/boom';
+import { getOtp2TripPatterns } from '../../service/impl/otp2/getTripPatterns';
+import createEnturService from '@entur/sdk/lib/service';
+import { ET_CLIENT_NAME } from '../../config/env';
 
 export default (server: Hapi.Server) => (service: IJourneyService) => {
   server.route({
@@ -32,12 +35,22 @@ export default (server: Hapi.Server) => (service: IJourneyService) => {
     path: '/bff/v1/journey/trip',
     options: {
       description: 'Find trip patterns',
-      tags: ['api', 'journey'],
-      validate: postJourneyRequest
+      tags: ['api', 'journey']
+      // validate: postJourneyRequest
     },
     handler: async (request, h) => {
+      console.log('request, h');
+      console.log(request.payload);
       const query = (request.payload as unknown) as TripPatternsQuery;
-      return (await service.getTripPatterns(query)).unwrap();
+      return await getOtp2TripPatterns(
+        createEnturService({
+          clientName: ET_CLIENT_NAME,
+          hosts: {
+            journeyPlanner: 'https://api.entur.io/journey-planner/v3'
+          }
+        }),
+        query
+      );
     }
   });
   server.route({

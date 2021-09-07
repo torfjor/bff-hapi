@@ -1,5 +1,5 @@
-import { TripPattern } from '@entur/sdk';
-import { IJourneyService } from '../interface';
+import { TransportMode, TripPattern } from '@entur/sdk';
+import { IJourneyService, Otp2TripPattern } from '../interface';
 import { Result } from '@badrap/result';
 import { APIError, TripPatternsQuery } from '../types';
 
@@ -7,6 +7,7 @@ import { PubSub } from '@google-cloud/pubsub';
 import { getEnv } from '../../utils/getenv';
 import { generateId, getServiceIds } from '../../utils/journey-utils';
 import { EnturServiceAPI } from './entur';
+import { getOtp2TripPatterns } from './otp2/getTripPatterns';
 
 const ENV = getEnv();
 const topicName = `analytics_trip_search`;
@@ -39,9 +40,17 @@ export default (
         batchedPublisher.publish(Buffer.from(JSON.stringify(query)), {
           environment: ENV
         });
-        const trips = await service.getTripPatterns(query);
+
+        console.log(query);
+
+        const [trips, metadata] = await getOtp2TripPatterns(service, query);
+
+        console.log(metadata);
+        console.log(trips);
+
         return Result.ok(addIdsToTrips(trips, query));
       } catch (error) {
+        console.log(error);
         return Result.err(new APIError(error));
       }
     },
@@ -69,7 +78,7 @@ export default (
   return api;
 };
 
-function addIdsToTrips(trips: TripPattern[], query: TripPatternsQuery) {
+function addIdsToTrips(trips: Otp2TripPattern[], query: TripPatternsQuery) {
   return trips.map(oneTrip => ({
     ...oneTrip,
     id: generateId(oneTrip, query)

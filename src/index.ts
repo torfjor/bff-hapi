@@ -24,6 +24,7 @@ import { GaxiosError } from 'gaxios';
 import { PubSub } from '@google-cloud/pubsub';
 import serviceJourneyRoutes from './api/servicejourney';
 import serviceJourneyService from './service/impl/service-journey';
+import { ET_CLIENT_NAME } from './config/env';
 
 process.on('unhandledRejection', err => {
   console.error(err);
@@ -46,7 +47,15 @@ process.on('unhandledRejection', err => {
     const server = createServer({
       port: port
     });
-    const enturService = enturClient({});
+    const enturService = enturClient({
+      clientName: ET_CLIENT_NAME
+    });
+    const v3enturService = enturClient({
+      clientName: ET_CLIENT_NAME,
+      hosts: {
+        journeyPlanner: 'https://api.entur.io/journey-planner/v3'
+      }
+    });
     await initializePlugins(server);
     server.route({
       method: '*',
@@ -56,7 +65,7 @@ process.on('unhandledRejection', err => {
     });
 
     const pubSubClient = new PubSub({ projectId });
-    const js = journeyService(enturService, pubSubClient);
+    const js = journeyService(v3enturService, pubSubClient);
     healthRoutes(server);
     stopsRoutes(server)(stopsService(enturService, pubSubClient));
     geocoderRoutes(server)(geocoderService(enturService, pubSubClient));
